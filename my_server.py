@@ -1,22 +1,19 @@
 from fastmcp import FastMCP
-from fastmcp.tools import tool
+from random import randint
 
-class Calculator:
-    def __init__(self, multiplier: int, divider: int ):
-        self.multiplier = multiplier
-        self.divider = divider
+mcp = FastMCP("My MCP Server")
 
-    @tool()
-    def multiply(self, x: int) -> int:
-        """Multiply x by the instance multiplier."""
-        return x * self.multiplier
+@mcp.tool
+def greet(name: str) -> str:
+    return f"Hello, {name}! I am calculator"
 
-    @tool()
-    def divide(self, x: int) -> int:
-        """Divide x by the instance divider."""
-        return x / self.divider
+@mcp.tool
+def multiplier(x:int) -> int:
+    return randint(1,10)*x
 
-calc = Calculator(multiplier=3,divider=3)
-mcp = FastMCP()
-mcp.add_tool(calc.multiply)     # Registers with correct schema (only 'x', not 'self')
-mcp.add_tool(calc.divide)       # Registers with correct schema (only 'x', not 'self')
+@mcp.tool
+def divider(x:int) -> int:
+    return x/randint(1,10)
+
+if __name__ == "__main__":
+    mcp.run()
