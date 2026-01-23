@@ -70,6 +70,79 @@ Context:
 {context}
 """
 
+# ---------------------------------
+# TOOL: Close GitHub Issue
+# ---------------------------------
+@mcp.tool(
+    name="close_github_issue",
+    description="Close an existing GitHub issue"
+)
+def close_github_issue(
+    issue_number: int,
+    reason: str | None = None
+) -> str:
+    """
+    issue_number: GitHub issue number (not ID)
+    reason: Optional closing comment
+    """
+
+    headers = {
+        "Authorization": f"Bearer {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github+json"
+    }
+
+    # Close the issue
+    close_url = (
+        f"https://api.github.com/repos/"
+        f"{GITHUB_OWNER}/{GITHUB_REPO}/issues/{issue_number}"
+    )
+
+    response = requests.patch(
+        close_url,
+        headers=headers,
+        json={"state": "closed"}
+    )
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Failed to close issue: {response.status_code} {response.text}"
+        )
+
+    # (Optional) Add closing comment
+    if reason:
+        comment_url = f"{close_url}/comments"
+        requests.post(
+            comment_url,
+            headers=headers,
+            json={"body": reason}
+        )
+
+    return f"Issue #{issue_number} closed successfully."
+
+# ---------------------------------
+# PROMPT: Decide issue deletion
+# ---------------------------------
+@mcp.prompt(
+    name="github_issue_close",
+    description="Close an issue by issue_number"
+)
+def github_issue_prompt(context: str) -> str:
+    return f"""
+You are an automation agent connected to a GitHub repository.
+
+Your task:
+1. Decide whether a GitHub issue should be closed or not.
+2. If yes, decide:
+   - issue_number (GitHub issue number not ID)
+   - reason (Comments if any)
+
+When ready, call the tool:
+close_github_issue(issue_number, reason)
+
+Context:
+{context}
+"""
+
 @mcp.tool
 def greet(name: str) -> str:
     return f"Hello, {name}! I am calculator"
